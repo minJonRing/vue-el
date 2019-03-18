@@ -1,8 +1,6 @@
 <template>
     <div class="app">
-        <div class="head">
-
-        </div>
+        欢迎您...
     </div>
 </template>
 
