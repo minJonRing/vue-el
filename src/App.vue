@@ -12,8 +12,8 @@
             <div class="left">
                 <el-col :span="24">
                     <el-menu
-                    unique-opened=true
-                    router=true
+                    :unique-opened=true
+                    :router=true
                     default-active="1"
                     class="el-menu-vertical-demo"
                     @open="handleOpen"
@@ -113,6 +113,9 @@ html,body {
     text-decoration: none;
     font-style: normal;
     -webkit-tap-highlight-color: transparent;
+}
+*::-webkit-scrollbar {
+    display: none;
 }
 #app {
     height: 100%;

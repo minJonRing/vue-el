@@ -1,82 +1,286 @@
 <template>
     <div class="edit">
         <div class="edit-head">
-            <el-button>返回</el-button>
+            <p>新增/编辑</p><el-button @click="handleReturn">返回</el-button>
         </div>
-        <el-form ref="form" :model="form" label-width="80px">
-            <el-form-item label="活动名称">
-                <el-input v-model="form.name"></el-input>
-            </el-form-item>
-            <el-form-item label="活动区域">
-                <el-select v-model="form.region" placeholder="请选择活动区域">
-                <el-option label="区域一" value="shanghai"></el-option>
-                <el-option label="区域二" value="beijing"></el-option>
+        <el-form ref="form" :model="form" label-width="120px">
+            <el-form-item label="类型">
+                <el-select class="w360" v-model="form.type" placeholder="请选择活动区域">
+                    <el-option :label="item.text" :value="item.value" v-for="(item,index) in form.typeArr" :key="index"></el-option>
                 </el-select>
             </el-form-item>
-            <el-form-item label="活动时间">
-                <el-col :span="11">
-                <el-date-picker type="date" placeholder="选择日期" v-model="form.date1" style="width: 100%;"></el-date-picker>
-                </el-col>
-                <el-col class="line" :span="2">-</el-col>
-                <el-col :span="11">
-                <el-time-picker type="fixed-time" placeholder="选择时间" v-model="form.date2" style="width: 100%;"></el-time-picker>
-                </el-col>
+            <el-form-item label="标题">
+                <el-input class="w360" v-model="form.title" suffix-icon="el-icon-edit" :span="12"></el-input>
             </el-form-item>
-            <el-form-item label="即时配送">
-                <el-switch v-model="form.delivery"></el-switch>
+            <el-form-item label="前言">
+                <el-input class="w360" type="textarea" v-model="form.desc"></el-input>
             </el-form-item>
-            <el-form-item label="活动性质">
-                <el-checkbox-group v-model="form.type">
-                <el-checkbox label="美食/餐厅线上活动" name="type"></el-checkbox>
-                <el-checkbox label="地推活动" name="type"></el-checkbox>
-                <el-checkbox label="线下主题活动" name="type"></el-checkbox>
-                <el-checkbox label="单纯品牌曝光" name="type"></el-checkbox>
-                </el-checkbox-group>
+            <el-form-item label="封面">
+                <el-upload
+                    class="avatar-uploader"
+                    action="/app/upload/cover"
+                    :show-file-list="false"
+                    :on-success="handleAvatarSuccess"
+                    :before-upload="beforeAvatarUpload">
+                    <img v-if="cover" :src="cover" class="avatar">
+                    <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                </el-upload>
             </el-form-item>
-            <el-form-item label="特殊资源">
-                <el-radio-group v-model="form.resource">
-                <el-radio label="线上品牌商赞助"></el-radio>
-                <el-radio label="线下场地免费"></el-radio>
-                </el-radio-group>
+            <el-form-item label="使用外部视频">
+                <el-switch
+                    v-model="form.isSwitch" >
+                </el-switch>
             </el-form-item>
-            <el-form-item label="活动形式">
-                <el-input type="textarea" v-model="form.desc"></el-input>
+            <el-form-item label="视频上传">
+                <div class="video-upload">
+                    <div class="video-upload-box">
+                        <div class="video-upload-btn">
+                            <input type="file" placeholder="*视频" @change="handleVideoLoader($event)" accept="video/mp4">
+                            <el-button>上传视频</el-button>
+                        </div>
+                        <el-progress class="video-upload-bar" :text-inside="true" :stroke-width="18" :percentage="form.percentage"></el-progress>
+                    </div>
+                    <div class="videos" v-if="form.video.length">
+                        <div class="video-box" v-for="(item,index) in form.video" :key="index">
+                            <el-tooltip class="remove-video" effect="dark" content="删除视频" placement="left">
+                                <el-button class="" type="danger" icon="el-icon-delete" circle @click="handleRemoveVideo($event,index)"></el-button>
+                            </el-tooltip>
+                            <video width="360" height="240" controls autoplay :src="item"></video>
+                        </div>
+                    </div>
+                </div>
+            </el-form-item>
+            <el-form-item label="内容正文">
+                <div ref="editor"></div>
             </el-form-item>
             <el-form-item>
-                <el-button type="primary" @click="onSubmit">立即创建</el-button>
-                <el-button>取消</el-button>
+                <el-button type="primary" @click="hanleOnSubmit">提交保存</el-button>
             </el-form-item>
         </el-form>
     </div>
 </template>
 <script>
+import E from 'wangeditor';
+import config from "../../config";
 export default {
     name:"edit",
+    props:['id'],
     data() {
         return {
             form: {
-            name: '',
-            region: '',
-            date1: '',
-            date2: '',
-            delivery: false,
-            type: [],
-            resource: '',
-            desc: ''
+                title: '',
+                desc: '',
+                type:'',
+                typeArr:'',
+                cover:'',
+                isSwitch:false,
+                percentage:0,
+                video:[]
+            },
+            cover:'',
+            editor:''
+        }
+    },
+    mounted(){
+        this.form.typeArr = config.workType;
+        this.handleEditorInit();
+        this.handleAjaxEdit();
+    },
+    watch:{
+        id(db){
+            if(db){
+                this.handleAjaxEdit();
             }
         }
     },
     methods: {
-        onSubmit() {
-            console.log('submit!');
+        // 富文本
+        handleEditorInit(){
+            this.editor = new E(this.$refs.editor)
+            this.editor.customConfig.uploadImgServer = '/app/upload/img'; //上传地址路由
+            this.editor.customConfig.uploadFileName = 'imgs' //后端后去的name名称
+            // 内容改变时触发
+            this.editor.customConfig.onchange = (html) => {
+                this.editorContent = html
+            }
+            this.editor.create();
+        },
+        // 获取数据
+        handleAjaxEdit(){
+            this.$axios.post("/app/getOneWork",{
+                id:this.id
+            }).then((res)=>{
+                let db = res.data.data;
+                this.form.title = db.title;
+                this.form.desc = db.desc || '';
+                this.form.type = db.type?db.type-0:'';
+                this.cover = db.cover;
+                this.form.isSwitch = db.isSwitch || false;
+                this.form.video = db.video || [];
+                this.editor.txt.html(db.cont);
+                
+            })
+            
+        },
+        // 提交
+        hanleOnSubmit() {
+            let formData = new FormData()
+            if(this.id){
+                formData.append("id", this.id)
+            }
+            formData.append("type", this.form.type)
+            formData.append("title", this.form.title)
+            formData.append("desc", this.form.desc)
+            formData.append("cover", this.form.cover)
+            formData.append("switch", this.form.isSwitch)
+            formData.append("video", this.form.video.join(','))
+            formData.append("cont", this.editor.txt.html())
+            console.log(this.form.type)
+        },
+        // 封面上传
+        handleAvatarSuccess(res, file) {
+            if(res.code == 200){
+                this.form.cover = res.data[0];
+                this.cover = URL.createObjectURL(file.raw);
+                this.$message.success(res.msg);
+            }
+        },
+        beforeAvatarUpload(file) {
+            const isLt2M = file.size / 1024 / 1024 < .2;
+            if (!isLt2M) {
+                this.$message.error('上传图片大小不能超过 2MB!');
+            }
+            return isLt2M;
+        },
+        // 视频上传
+        handleVideoLoader(e){
+            this.form.percentage = 0;
+            let file = e.target.files;
+            if(file.length){
+                let formData = new FormData();
+                formData.append("video", file[0]);
+                let config = {
+                    onUploadProgress: progressEvent => {
+                        var complete = (progressEvent.loaded / progressEvent.total * 100 | 0)
+                        this.form.percentage = complete;
+                    }
+                }
+                this.$axios.post("/app/video",formData,config).then((res)=>{
+                    let data = res.data;
+                    if(res.data.code == 200){
+                        this.$message.success(data.msg);
+                        this.form.video.push('http://localhost:3000'+data.url);
+                    }
+                }).catch((err)=>{
+                    this.$message.error("上传出错,请重新上传");
+                })
+            }
+        },
+        // 删除视频
+        handleRemoveVideo(e,i){
+            this.form.video.splice(i,1);
+        },
+        // 返回
+        handleReturn(){
+            this.$emit("handleReturnHome");
+            this.form.title = '';
+            this.form.desc = '';
+            this.form.type = '';
+            this.form.cover = '';
+            this.form.isSwitch = false;
+            this.form.percentage = 0;
+            this.form.video = [];
+            this.cover = '';
+            this.editor.txt.clear()
         }
     }
 }
 </script>
+<style>
+.avatar-uploader .el-upload {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+.avatar-uploader .el-upload:hover {
+    border-color: #409EFF;
+}
+.avatar-uploader-icon {
+    font-size: 28px;
+    color: #8c939d;
+    width: 360px;
+    height: 40px;
+    line-height: 46px;
+    text-align: center;
+}
+.avatar {
+    max-width: 240px;
+    display: block;
+}
+</style>
 <style lang="scss" scoped>
 .edit {
-    .edit-head {
-        padding-bottom: 12px;
+    .w360 {
+        width: 360px;
     }
+    .edit-head {
+        display: flex;
+        align-items: center;
+        padding-bottom: 24px;
+        p{
+            font-size: 16px;
+            width: 120px;
+            padding-left: 12px;
+        }
+    }
+    .video-upload {
+        position: relative;
+        .video-upload-box{
+            .video-upload-btn {
+                position: relative;
+                display: inline-block;
+                input {
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    opacity: 0;
+                    cursor: pointer;
+                    z-index: 1;
+                }
+            }
+            .video-upload-bar {
+                display: inline-block;
+                width: 200px;
+                margin-left: 12px;
+            }
+        }
+        .videos {
+            display: flex;
+            flex-wrap: wrap;
+            padding-top: 12px;
+            .video-box {
+                position: relative;
+                width: 360px;
+                height: 240px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 12px;
+                box-shadow: 3px 3px 12px rgba(0,0,0,.1);
+                border-radius: 4px;
+                .remove-video {
+                    position: absolute;
+                    top: 0px;
+                    right: 0px;
+                    box-shadow: 1px 1px 6px rgba(0,0,0,.3);
+                    z-index: 1;
+                }
+            }
+            
+        }
+    }
+    
 }
 </style>
