@@ -5,7 +5,7 @@
                 <img src="" alt="">
             </div>
             <div class="head-user">
-                <a href="javascript:" class="login-out">退出登录</a>
+                <a href="javascript:" class="login-out" @click="handleLoginOut">退出登录</a>
             </div>
         </div>
         <div class="cont">
@@ -27,43 +27,24 @@
                         </el-menu-item>
                         <el-submenu index="1">
                             <template slot="title">
-                                <i class="el-icon-location"></i>
-                                <span>导航一</span>
+                                <i class="el-icon-setting"></i>
+                                <span>基础</span>
                             </template>
-                            <el-menu-item-group>
-                                <template slot="title">分组一</template>
+                            <el-menu-item-group title="分组一">
                                 <el-menu-item index="1-1">选项1</el-menu-item>
                                 <el-menu-item index="1-2">选项2</el-menu-item>
                             </el-menu-item-group>
                             <el-menu-item-group title="分组2">
                                 <el-menu-item index="1-3">选项3</el-menu-item>
                             </el-menu-item-group>
-                            <el-submenu index="1-4">
-                                <template slot="title">选项4</template>
-                                <el-menu-item index="1-4-1">选项1</el-menu-item>
-                            </el-submenu>
                         </el-submenu>
-                        <el-menu-item index="work-index">
-                            <i class="el-icon-menu"></i>
-                            <span slot="title">导航二</span>
+                        <el-menu-item index="work">
+                            <i class="el-icon-document"></i>
+                            <span slot="title">产品</span>
                         </el-menu-item>
-                        <el-submenu index="3">
-                            <template slot="title">
-                                <i class="el-icon-location"></i>
-                                <span>导航三</span>
-                            </template>
-                            <el-menu-item-group>
-                                <template slot="title">分组一</template>
-                                <el-menu-item index="3-1">选项1</el-menu-item>
-                                <el-menu-item index="3-2">选项2</el-menu-item>
-                            </el-menu-item-group>
-                            <el-menu-item-group title="分组2">
-                                <el-menu-item index="3-3">选项3</el-menu-item>
-                            </el-menu-item-group>
-                        </el-submenu>
-                        <el-menu-item index="4">
-                            <i class="el-icon-setting"></i>
-                            <span slot="title">导航四</span>
+                        <el-menu-item index="news">
+                            <i class="el-icon-star-off"></i>
+                            <span slot="title">新闻</span>
                         </el-menu-item>
                     </el-menu>
                 </el-col>
@@ -82,8 +63,7 @@ export default {
     name: 'App',
     data(){
         return {
-            activeIndex: '1',
-            activeIndex2: '1'
+
         }
     },
     methods: {
@@ -92,6 +72,17 @@ export default {
         },
         handleClose(key, keyPath) {
             console.log(key, keyPath);
+        },
+        handleLoginOut(){
+            this.$axios.get("/app/logout").then((res)=>{
+                if(res.data.code == 200){
+                    this.$message({
+                        type: 'success',
+                        message: res.data.msg
+                    });
+                    window.location.href = "/app/admin";
+                }
+            })
         }
     }
 }

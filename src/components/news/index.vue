@@ -54,7 +54,7 @@
                     <template slot-scope="scope">
                         <el-tag
                         :type="handleTagFilter(scope.row.type)"
-                        disable-transitions>{{typeArr[scope.row.type-1]?typeArr[scope.row.type-1].text:'暂无'}}</el-tag>
+                        disable-transitions>{{typeArr[scope.row.type-1].text || '暂无'}}</el-tag>
                     </template>
                 </el-table-column>
                 <el-table-column
@@ -112,7 +112,7 @@ export default {
         }
     },
     mounted(){
-        this.typeArr  =config.newsType;
+        this.typeArr  =config.workType;
         this.handleAjaxList();
     },
     watch:{
@@ -133,7 +133,7 @@ export default {
         // 获取数据 
         handleAjaxList(){
             this.loading = true;
-            this.$axios.get("/app/project/list").then(res=>{
+            this.$axios.get("/app/informa/list").then(res=>{
                 if(res.data.code == 200){
                     this.init = [...res.data.data];
                     this.total = this.init.length;
@@ -189,7 +189,7 @@ export default {
                 cancelButtonText: '取消',
                 type: 'warning'
             }).then(() => {
-                this.$axios.post("/app/project/remove",{id:row._id}).then((res)=>{
+                this.$axios.post("/app/informa/remove",{id:row._id}).then((res)=>{
                     if(res.data.code == 200){
                         this.$message({
                             type: 'success',

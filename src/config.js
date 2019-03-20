@@ -12,7 +12,7 @@ let config = {
         text:"类型4",
         value:4,
     }],
-    newWork:[{
+    newsType:[{
         text:"类型1",
         value:1,
     },{

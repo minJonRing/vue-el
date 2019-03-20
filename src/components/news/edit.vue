@@ -27,11 +27,6 @@
                         <i v-else class="el-icon-plus avatar-uploader-icon"></i>
                     </el-upload>
                 </el-form-item>
-                <el-form-item label="封面是否是长图">
-                    <el-switch
-                        v-model="form.isLong" >
-                    </el-switch>
-                </el-form-item>
                 <el-form-item label="使用外部视频">
                     <el-switch
                         v-model="form.isSwitch" >
@@ -80,7 +75,6 @@ export default {
                 type:'',
                 typeArr:'',
                 cover:'',
-                isLong:false,
                 isSwitch:false,
                 percentage:0,
                 video:[]
@@ -90,7 +84,7 @@ export default {
         }
     },
     mounted(){
-        this.form.typeArr = config.workType;
+        this.form.typeArr = config.newsType;
         this.handleEditorInit();
     },
     watch:{
@@ -114,7 +108,7 @@ export default {
         },
         // 获取数据
         handleAjaxEdit(){
-            this.$axios.get("/app/project/edit",{
+            this.$axios.get("/app/informa/edit",{
                 params:{ id:this.id }
             }).then((res)=>{
                 let db = res.data.data;
@@ -123,7 +117,6 @@ export default {
                 this.form.type = db.type?db.type-0:'';
                 this.form.cover = db.cover || '';
                 this.cover = db.cover || '';
-                this.form.isLong = db.isLong || false;
                 this.form.isSwitch = db.isSwitch || false;
                 this.form.video = db.video?db.video.split(',') : [];
                 this.editor.txt.html(db.cont);
@@ -132,12 +125,11 @@ export default {
         },
         // 提交
         hanleOnSubmit() {
-            let data = {
+           let data = {
                 type:this.form.type,
                 title:this.form.title,
                 desc:this.form.desc,
                 cover:this.form.cover,
-                isLong:this.form.isLong,
                 isSwitch:this.form.isSwitch,
                 video:this.form.video,
                 cont:this.editor.txt.html()
@@ -145,7 +137,7 @@ export default {
             if(this.id){
                 data.id = this.id;
             }
-            this.$axios.post("/app/project/create",data).then((res)=>{
+            this.$axios.post("/app/informa/create",data).then((res)=>{
                 if(res.data.code == 200){
                     this.$message({
                         type: 'success',
@@ -164,10 +156,9 @@ export default {
             }
         },
         beforeAvatarUpload(file) {
-            console.log(file.size)
-            const isLt2M = file.size / 1024 / 1024 < 1;
+            const isLt2M = file.size / 1024 / 1024 < .2;
             if (!isLt2M) {
-                this.$message.error('上传图片大小不能超过 1MB!');
+                this.$message.error('上传图片大小不能超过 2MB!');
             }
             return isLt2M;
         },
@@ -206,7 +197,6 @@ export default {
             this.form.desc = '';
             this.form.type = '';
             this.form.cover = '';
-            this.form.isLong = false;
             this.form.isSwitch = false;
             this.form.percentage = 0;
             this.form.video = [];
