@@ -273,6 +273,10 @@ export default {
     max-width: 240px;
     display: block;
 }
+.out-video-item-el iframe {
+    width: 100%;
+    height: 100%;
+}
 </style>
 <style lang="scss" scoped>
 .edit {
@@ -314,6 +318,9 @@ export default {
                     transition-duration: 600ms;
                 }
                 .out-video-item-el {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                     width: 100%;
                     height: 100%;
                 }
