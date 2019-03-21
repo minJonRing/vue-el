@@ -6,12 +6,12 @@
         <div class="edit-form">
             <el-form ref="form" :model="form" label-width="120px">
                 <el-form-item label="类型">
-                    <el-select class="w360" v-model="form.type" placeholder="请选择活动区域">
+                    <el-select class="w360" v-model="form.type" placeholder="请选择类型">
                         <el-option :label="item.text" :value="item.value" v-for="(item,index) in form.typeArr" :key="index"></el-option>
                     </el-select>
                 </el-form-item>
                 <el-form-item label="标题">
-                    <el-input class="w360" v-model="form.title" suffix-icon="el-icon-edit" :span="12"></el-input>
+                    <el-input class="w360" v-model="form.title" suffix-icon="el-icon-edit" :span="12" placeholder="请输入标题"></el-input>
                 </el-form-item>
                 <el-form-item label="前言">
                     <el-input class="w360" type="textarea" v-model="form.desc"></el-input>
@@ -37,7 +37,21 @@
                         v-model="form.isSwitch" >
                     </el-switch>
                 </el-form-item>
-                <el-form-item label="视频上传">
+                <el-form-item label="外部视频" v-if="form.isSwitch">
+                    <div>
+                        <el-input class="w360" v-model="form.outVideo" placeholder="请输入正确的外部链接"></el-input>
+                        <el-button type="primary" @click="handleConfirmOutVideo">确定使用</el-button>
+                    </div>
+                    <div class="out-video-list">
+                        <div class="out-video-item" v-for="(item,index) in form.outVideoArr" :key="index" >
+                            <el-tooltip class="remove-video" effect="dark" content="删除视频" placement="left">
+                                <el-button class="" type="danger" icon="el-icon-delete" circle @click="handleRemoveOutVideo($event,index)"></el-button>
+                            </el-tooltip>
+                            <div class="out-video-item-el" v-html="item"></div>
+                        </div>
+                    </div>
+                </el-form-item>
+                <el-form-item label="视频上传" v-if="!form.isSwitch">
                     <div class="video-upload">
                         <div class="video-upload-box">
                             <div class="video-upload-btn">
@@ -83,7 +97,9 @@ export default {
                 isLong:false,
                 isSwitch:false,
                 percentage:0,
-                video:[]
+                video:[],
+                outVideo:"",
+                outVideoArr:[]
             },
             cover:'',
             editor:''
@@ -126,6 +142,7 @@ export default {
                 this.form.isLong = db.isLong || false;
                 this.form.isSwitch = db.isSwitch || false;
                 this.form.video = db.video?db.video.split(',') : [];
+                this.form.outVideoArr = db.outVideo?db.outVideo.split(',') : [];
                 this.editor.txt.html(db.cont);
             })
             
@@ -139,7 +156,8 @@ export default {
                 cover:this.form.cover,
                 isLong:this.form.isLong,
                 isSwitch:this.form.isSwitch,
-                video:this.form.video,
+                video:this.form.video.join(","),
+                outVideo:this.form.outVideoArr.join(","),
                 cont:this.editor.txt.html()
             };
             if(this.id){
@@ -164,7 +182,6 @@ export default {
             }
         },
         beforeAvatarUpload(file) {
-            console.log(file.size)
             const isLt2M = file.size / 1024 / 1024 < 1;
             if (!isLt2M) {
                 this.$message.error('上传图片大小不能超过 1MB!');
@@ -191,13 +208,28 @@ export default {
                         this.form.video.push(data.url);
                     }
                 }).catch((err)=>{
-                    this.$message.error("上传出错,请重新上传");
+                    this.$message.error("上传出错,请重新上传/或使用外部视频");
                 })
             }
         },
         // 删除视频
         handleRemoveVideo(e,i){
             this.form.video.splice(i,1);
+        },
+        // 添加外部视频
+        handleConfirmOutVideo(){
+            let str = this.form.outVideo;
+            if(str){
+                let a = str.replace(/(width="480")/,'width="360"').replace(/(height="400")/,'height="240"');
+                this.form.outVideoArr.push(a);
+                this.form.outVideo = "";
+            }else{
+                this.$message.error("外部视频内容不能为空!");
+            }
+        },
+        // 删除外部视频
+        handleRemoveOutVideo(e,i){
+            this.form.outVideoArr.splice(i,1);
         },
         // 返回
         handleReturn(){
@@ -210,6 +242,8 @@ export default {
             this.form.isSwitch = false;
             this.form.percentage = 0;
             this.form.video = [];
+            this.form.outVideo = '';
+            this.form.outVideoArr = [];
             this.cover = '';
             this.editor.txt.clear()
         }
@@ -261,6 +295,35 @@ export default {
     .edit-form {
         height: calc(100% - 64px);
         overflow-y: scroll;
+        .out-video-list {
+            .out-video-item {
+                position: relative;
+                display: inline-block;
+                vertical-align: middle;
+                width: 360px;
+                height: 240px;
+                margin: 12px 24px 12px 0;
+                overflow: hidden;
+                .remove-video {
+                    position: absolute;
+                    top: 0px;
+                    right: 0px;
+                    box-shadow: 1px 1px 6px rgba(0,0,0,.3);
+                    opacity: 0;
+                    z-index: 1;
+                    transition-duration: 600ms;
+                }
+                .out-video-item-el {
+                    width: 100%;
+                    height: 100%;
+                }
+                &:hover {
+                    .remove-video{
+                        opacity: 1;
+                    }
+                }
+            }
+        }
         .video-upload {
             position: relative;
             .video-upload-box{
