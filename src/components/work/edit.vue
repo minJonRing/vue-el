@@ -16,6 +16,9 @@
                 <el-form-item label="前言">
                     <el-input class="w360" type="textarea" v-model="form.desc"></el-input>
                 </el-form-item>
+                <el-form-item label="首页排序">
+                    <el-input class="w360" v-model="form.sort"></el-input>
+                </el-form-item>
                 <el-form-item label="封面">
                     <el-upload
                         class="avatar-uploader"
@@ -91,6 +94,7 @@ export default {
             form: {
                 title: '',
                 desc: '',
+                sort:99,
                 type:'',
                 typeArr:'',
                 cover:'',
@@ -122,6 +126,7 @@ export default {
             this.editor = new E(this.$refs.editor)
             this.editor.customConfig.uploadImgServer = '/app/upload/img'; //上传地址路由
             this.editor.customConfig.uploadFileName = 'imgs' //后端后去的name名称
+            // editor.config.uploadTimeout = 100000000;
             // 内容改变时触发
             this.editor.customConfig.onchange = (html) => {
                 this.editorContent = html
@@ -136,6 +141,7 @@ export default {
                 let db = res.data.data;
                 this.form.title = db.title || '';
                 this.form.desc = db.desc || '';
+                this.form.sort = db.sort || 99;
                 this.form.type = db.type?db.type-0:'';
                 this.form.cover = db.cover || '';
                 this.cover = db.cover || '';
@@ -153,6 +159,7 @@ export default {
                 type:this.form.type,
                 title:this.form.title,
                 desc:this.form.desc,
+                sort:this.form.sort,
                 cover:this.form.cover,
                 isLong:this.form.isLong,
                 isSwitch:this.form.isSwitch,
@@ -182,9 +189,9 @@ export default {
             }
         },
         beforeAvatarUpload(file) {
-            const isLt2M = file.size / 1024 / 1024 < 1;
+            const isLt2M = file.size / 1024 / 1024 < 2;
             if (!isLt2M) {
-                this.$message.error('上传图片大小不能超过 1MB!');
+                this.$message.error('上传图片大小不能超过 2MB!');
             }
             return isLt2M;
         },

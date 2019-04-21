@@ -112,7 +112,7 @@ export default {
         }
     },
     mounted(){
-        this.typeArr  =config.newsType;
+        this.typeArr  =config.workType;
         this.handleAjaxList();
     },
     watch:{
